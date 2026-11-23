@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Grading Periods — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Grading Periods Configuration</h1>
+            <p class="text-muted mb-0">Define evaluation terms, calendar order, and active periods.</p>
+        </div>
+        <div>
+            <button class="btn btn-primary d-flex align-items-center gap-1" data-bs-toggle="collapse" data-bs-target="#newPeriodForm">
+                <i class="bi bi-plus-circle-fill" aria-hidden="true"></i> Add Grading Period
+            </button>
+        </div>
+    </div>
+
+    <div class="collapse mb-4" id="newPeriodForm">
+        <div class="card shadow-sm border-primary">
+            <div class="card-header bg-primary text-white py-3">
+                <h2 class="h6 mb-0 fw-bold">Add New Grading Period</h2>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{{ path('admin_grading_periods') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('new_period') }}">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="code" class="form-label fw-semibold">Period Code <span class="text-danger">*</span></label>
+                            <input type="text" name="code" id="code" class="form-control" placeholder="e.g. MIDTERM" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="name" class="form-label fw-semibold">Period Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="name" class="form-control" placeholder="e.g. Midterm Period" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="sequence_order" class="form-label fw-semibold">Sequence Order <span class="text-danger">*</span></label>
+                            <input type="number" name="sequence_order" id="sequence_order" class="form-control" value="1" min="1" required>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#newPeriodForm">Cancel</button>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4">Create Period</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" aria-label="Grading Periods Table">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 80px;">Order</th>
+                            <th scope="col" style="width: 150px;">Code</th>
+                            <th scope="col">Period Name</th>
+                            <th scope="col">Duration</th>
+                            <th scope="col" class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in periods %}
+                            <tr>
+                                <td class="fw-bold text-muted">{{ p.sequenceOrder }}</td>
+                                <td class="font-monospace fw-bold text-primary">{{ p.code }}</td>
+                                <td class="fw-semibold">{{ p.name }}</td>
+                                <td class="small text-muted">
+                                    {{ p.startDate ? p.startDate|date('M d, Y') : 'Start' }} &mdash; {{ p.endDate ? p.endDate|date('M d, Y') : 'End' }}
+                                </td>
+                                <td class="text-center">
+                                    {% if p.isActive %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Closed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

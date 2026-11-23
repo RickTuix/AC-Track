@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}User Management — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Users &amp; Academic Profiles</h1>
+            <p class="text-muted mb-0">Manage accounts, assign roles, and configure student/teacher profiles.</p>
+        </div>
+        <div>
+            <a href="{{ path('admin_user_new') }}" class="btn btn-primary d-flex align-items-center gap-1">
+                <i class="bi bi-person-plus-fill" aria-hidden="true"></i> Create New User
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="d-flex gap-2 mb-4">
+        <a href="{{ path('admin_users') }}" class="btn btn-sm {{ currentRole is empty ? 'btn-dark' : 'btn-outline-secondary' }}">
+            All Users ({{ users|length }})
+        </a>
+        <a href="{{ path('admin_users', {'role': 'ROLE_ADMIN'}) }}" class="btn btn-sm {{ currentRole == 'ROLE_ADMIN' ? 'btn-dark' : 'btn-outline-secondary' }}">
+            Administrators
+        </a>
+        <a href="{{ path('admin_users', {'role': 'ROLE_TEACHER'}) }}" class="btn btn-sm {{ currentRole == 'ROLE_TEACHER' ? 'btn-info text-dark' : 'btn-outline-info text-dark' }}">
+            Faculty / Teachers
+        </a>
+        <a href="{{ path('admin_users', {'role': 'ROLE_STUDENT'}) }}" class="btn btn-sm {{ currentRole == 'ROLE_STUDENT' ? 'btn-success' : 'btn-outline-success' }}">
+            Students
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" aria-label="System Users Table">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Name &amp; Username</th>
+                            <th scope="col">Email Address</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Affiliation / Detail</th>
+                            <th scope="col" class="text-center">Status</th>
+                            <th scope="col" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ u.displayName }}</div>
+                                    <small class="text-muted font-monospace">@{{ u.username }}</small>
+                                </td>
+                                <td>{{ u.email }}</td>
+                                <td>
+                                    {% if u.isAdmin() %}
+                                        <span class="badge bg-dark">Admin</span>
+                                    {% elseif u.isTeacher() %}
+                                        <span class="badge bg-info text-dark">Teacher</span>
+                                    {% elseif u.isStudent() %}
+                                        <span class="badge bg-success">Student</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small">
+                                    {% if u.studentProfile %}
+                                        <span>ID: <code>{{ u.studentProfile.studentNumber }}</code></span><br>
+                                        <span class="text-muted">{{ u.studentProfile.section ? u.studentProfile.section.name : 'No section' }} &bull; {{ u.studentProfile.yearLevel }}</span>
+                                    {% elseif u.teacherProfile %}
+                                        <span>Emp: <code>{{ u.teacherProfile.employeeNumber }}</code></span><br>
+                                        <span class="text-muted">{{ u.teacherProfile.department }}</span>
+                                    {% else %}
+                                        <span class="text-muted">System Administrator</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if u.isActive %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ path('admin_user_edit', {'id': u.id}) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil" aria-hidden="true"></i> Edit
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Academic Progress Report - {{ section ? section.name : 'All' }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+            margin: 15px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .header h1 {
+            margin: 0 0 4px 0;
+            font-size: 16pt;
+            color: #0f172a;
+        }
+        .header .sub {
+            font-size: 8.5pt;
+            color: #555;
+            text-transform: uppercase;
+        }
+        .meta-box {
+            width: 100%;
+            margin-bottom: 14px;
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 6px;
+        }
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+        .meta-label {
+            color: #64748b;
+            font-weight: bold;
+            font-size: 7.5pt;
+            text-transform: uppercase;
+        }
+        table.report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table.report-table th, table.report-table td {
+            border: 1px solid #cbd5e1;
+            padding: 5px 6px;
+            font-size: 8.5pt;
+        }
+        table.report-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: bold;
+            text-align: center;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .status-needs { color: #dc2626; font-weight: bold; }
+        .status-review { color: #0284c7; font-weight: bold; }
+        .status-clear { color: #16a34a; font-weight: bold; }
+        .signatures {
+            margin-top: 30px;
+            width: 100%;
+        }
+        .signatures td {
+            text-align: center;
+            font-size: 8.5pt;
+            padding-top: 25px;
+        }
+        .sig-line {
+            border-top: 1px solid #000;
+            width: 75%;
+            margin: 0 auto;
+            padding-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AC.TRACK ACADEMIC SYSTEM</h1>
+        <div class="sub">Office of the University Registrar &bull; Official Academic Progress &amp; INC Resolution Report</div>
+        <div style="font-size: 8pt; color: #64748b; margin-top: 2px;">Academic Term 2024-2025 &bull; First Semester</div>
+    </div>
+
+    <div class="meta-box">
+        <table class="meta-table">
+            <tr>
+                <td style="width: 33%;">
+                    <div class="meta-label">Class Cohort / Section</div>
+                    <div><strong>{{ section ? section.name : 'All Sections' }}</strong></div>
+                </td>
+                <td style="width: 33%;">
+                    <div class="meta-label">Academic Year &amp; Term</div>
+                    <div>{{ section ? section.academicYear ~ ' (' ~ section.semester ~ ')' : 'Current AY' }}</div>
+                </td>
+                <td style="width: 33%;">
+                    <div class="meta-label">Enrolled Student Count</div>
+                    <div><strong>{{ progressData|length }} Students</strong></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="report-table">
+        <thead>
+            <tr>
+                <th style="width: 14%; text-align: left;">Student ID</th>
+                <th style="width: 24%; text-align: left;">Full Name</th>
+                <th style="width: 9%;">Year Level</th>
+                <th style="width: 9%;">Grades</th>
+                <th style="width: 9%;">Grade Avg</th>
+                <th style="width: 8%;">Pending</th>
+                <th style="width: 8%;">Submitted</th>
+                <th style="width: 8%;">Completed</th>
+                <th style="width: 11%;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in progressData %}
+                {% set st = item.student %}
+                <tr>
+                    <td><strong>{{ st.studentNumber }}</strong></td>
+                    <td>{{ st.lastName }}, {{ st.firstName }}</td>
+                    <td class="text-center">{{ st.yearLevel }}</td>
+                    <td class="text-center">{{ item.totalGrades }}</td>
+                    <td class="text-center"><strong>{{ item.gpa > 0 ? item.gpa|number_format(2) : 'N/A' }}</strong></td>
+                    <td class="text-center">{{ item.pending }}</td>
+                    <td class="text-center">{{ item.submitted }}</td>
+                    <td class="text-center">{{ item.completed }}</td>
+                    <td class="text-center">
+                        {% if item.status == 'NEEDS ATTENTION' %}
+                            <span class="status-needs">NEEDS ATTN</span>
+                        {% elseif item.status == 'UNDER REVIEW' %}
+                            <span class="status-review">REVIEW</span>
+                        {% else %}
+                            <span class="status-clear">CLEARED</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="signatures">
+        <tr>
+            <td style="width: 33%;">
+                <div class="sig-line"><strong>Faculty Chairperson</strong><br>Department Evaluation</div>
+            </td>
+            <td style="width: 33%;">
+                <div class="sig-line"><strong>University Registrar</strong><br>Official Certification</div>
+            </td>
+            <td style="width: 33%;">
+                <div class="sig-line"><strong>{{ generatedAt|date('F d, Y') }}</strong><br>Report Date</div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

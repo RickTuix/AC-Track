@@ -1,0 +1,213 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Review INC: {{ record.student.fullName }} — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('teacher_dashboard') }}">Instructor Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('teacher_incompletes') }}">INC Records</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ record.student.fullName }} - {{ record.missingItemTitle }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-secondary fs-6">{{ record.subject.code }}</span>
+                <span class="badge bg-dark fs-6">{{ record.section ? record.section.name : 'Unassigned' }}</span>
+                {{ status_badge(record.status) }}
+                {% if record.isOverdue() %}
+                    <span class="badge badge-overdue d-inline-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i> Overdue
+                    </span>
+                {% elseif record.isApproachingDeadline(48) %}
+                    <span class="badge badge-approaching d-inline-flex align-items-center">
+                        <i class="bi bi-clock-history me-1" aria-hidden="true"></i> Due Soon
+                    </span>
+                {% endif %}
+            </div>
+            <h1 class="h3 fw-bold mb-0">{{ record.student.fullName }} &mdash; {{ record.missingItemTitle }}</h1>
+            <p class="text-muted small mb-0">{{ record.student.studentNumber }} &bull; {{ record.gradingPeriod.name }} Period</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('teacher_incompletes') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Back to INC List
+            </a>
+            <a href="{{ path('teacher_incomplete_edit', {'id': record.id}) }}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-1" aria-hidden="true"></i> Edit Instructions/Deadline
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Column: Requirement Specification & History -->
+        <div class="col-12 col-lg-7">
+            <!-- Specification Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle-fill text-primary" aria-hidden="true"></i>
+                        Requirement Specification
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <span class="text-muted small fw-bold text-uppercase d-block mb-1">Teacher's Explanation &amp; Remarks</span>
+                        <div class="p-3 bg-light rounded border">
+                            <p class="mb-0" style="white-space: pre-wrap;">{{ record.teacherExplanation }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <span class="text-primary small fw-bold text-uppercase d-block mb-1">Required Student Action</span>
+                        <div class="p-3 bg-primary-subtle text-primary-emphasis rounded border border-primary-subtle">
+                            <p class="mb-0 fw-medium" style="white-space: pre-wrap;">{{ record.requiredAction }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 pt-3 border-top small text-muted">
+                        <div class="col-sm-6">
+                            <span>Deadline:</span>
+                            <div class="fw-bold {{ record.isOverdue() ? 'text-danger' : 'text-dark' }}">{{ record.deadline|date('F d, Y h:i A') }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <span>Date Created:</span>
+                            <div class="fw-semibold text-dark">{{ record.createdAt|date('M d, Y h:i A') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Submission Card -->
+            <div class="card shadow-sm mb-4 border-{{ record.status.value == 'SUBMITTED' ? 'info' : (record.status.value == 'COMPLETED' ? 'success' : 'secondary') }}">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-cloud-arrow-down-fill text-info" aria-hidden="true"></i>
+                        Student Resolution Submission
+                    </h2>
+                    {{ status_badge(record.status) }}
+                </div>
+                <div class="card-body">
+                    {% if record.status.value == 'PENDING' %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-hourglass-split fs-2 text-warning mb-2 d-block" aria-hidden="true"></i>
+                            <div class="fw-semibold text-dark mb-1">No Submission Received Yet</div>
+                            <p class="small text-muted mb-0">The student has not yet submitted resolution deliverables for this requirement.</p>
+                        </div>
+                    {% else %}
+                        <div class="mb-3">
+                            <span class="text-muted small fw-bold text-uppercase d-block mb-1">Student's Remarks / Explanation:</span>
+                            <div class="p-3 bg-light rounded border">
+                                {{ record.submissionNote ?: 'No explanation note provided.' }}
+                            </div>
+                        </div>
+
+                        {% if record.attachmentPath %}
+                            <div class="mb-3">
+                                <span class="text-muted small fw-bold text-uppercase d-block mb-1">Attached Work / Evidence:</span>
+                                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded border">
+                                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                        <i class="bi bi-file-earmark-arrow-down-fill text-primary fs-3" aria-hidden="true"></i>
+                                        <div class="overflow-hidden">
+                                            <div class="fw-semibold text-truncate">{{ record.attachmentOriginalName ?: record.attachmentPath }}</div>
+                                            <small class="text-muted">Verified upload</small>
+                                        </div>
+                                    </div>
+                                    <a href="{{ path('teacher_incomplete_download', {'id': record.id}) }}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-download me-1" aria-hidden="true"></i> Download File
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="small text-muted">
+                            Submitted on: <strong>{{ record.submittedAt ? record.submittedAt|date('F d, Y h:i A') : 'N/A' }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Evaluation & Resolution Actions -->
+        <div class="col-12 col-lg-5">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-dark text-white py-3">
+                    <h2 class="h6 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-clipboard-check-fill" aria-hidden="true"></i>
+                        Instructor Evaluation Actions
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    {% if record.status.value == 'COMPLETED' %}
+                        <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-check-circle-fill fs-3 text-success" aria-hidden="true"></i>
+                            <div>
+                                <div class="fw-bold">Resolution Officially Completed</div>
+                                <div class="small">Cleared on {{ record.resolvedAt ? record.resolvedAt|date('M d, Y h:i A') : 'recently' }}.</div>
+                            </div>
+                        </div>
+                        <p class="small text-muted">
+                            To record the student's finalized numerical grade, navigate to the class Grade Sheet.
+                        </p>
+                        <a href="{{ path('teacher_grades_matrix', {'sectionId': record.section.id, 'subjectId': record.subject.id}) }}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-table me-1" aria-hidden="true"></i> Open Class Grade Sheet
+                        </a>
+                    {% else %}
+                        <form method="post" action="{{ path('teacher_incomplete_resolve', {'id': record.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('resolve_inc_' ~ record.id) }}">
+
+                            <div class="mb-3">
+                                <label for="teacher_remarks" class="form-label fw-semibold small">
+                                    Teacher Remarks / Evaluation Feedback
+                                </label>
+                                <textarea name="teacher_remarks" id="teacher_remarks" class="form-control" rows="3" placeholder="Add comments, grade update notes, or revision instructions..."></textarea>
+                                <div class="form-text small">Visible to the student and logged in the academic audit log.</div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" name="decision" value="complete" class="btn btn-success fw-semibold py-2">
+                                    <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i> Mark as Completed / Resolved
+                                </button>
+
+                                <button type="submit" name="decision" value="return" class="btn btn-outline-danger py-2">
+                                    <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i> Return for Revisions (Set to Pending)
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Student Profile Summary -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h3 class="h6 mb-0 fw-bold">Student Record</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Student Name:</span>
+                            <strong>{{ record.student.fullName }}</strong>
+                        </li>
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Student ID:</span>
+                            <span class="font-monospace">{{ record.student.studentNumber }}</span>
+                        </li>
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Section:</span>
+                            <span>{{ record.student.section ? record.student.section.name : 'N/A' }}</span>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span class="text-muted">Email:</span>
+                            <span>{{ record.student.user.email }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

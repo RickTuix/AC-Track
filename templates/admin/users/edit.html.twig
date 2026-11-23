@@ -1,0 +1,109 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit User: {{ editUser.username }} — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin_dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin_users') }}">Users</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit {{ editUser.username }}</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h1 class="h4 fw-bold mb-1">Edit User Profile</h1>
+                    <p class="text-muted small mb-0">{{ editUser.displayName }} &bull; @{{ editUser.username }}</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" action="{{ path('admin_user_edit', {'id': editUser.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('edit_user_' ~ editUser.id) }}">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label fw-semibold">Email Address</label>
+                                <input type="email" name="email" id="email" class="form-control" value="{{ editUser.email }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="password" class="form-label fw-semibold">Reset Password (Optional)</label>
+                                <input type="password" name="password" id="password" class="form-control" placeholder="Leave blank to keep current password">
+                            </div>
+                        </div>
+
+                        {% if editUser.studentProfile %}
+                            {% set st = editUser.studentProfile %}
+                            <div class="p-3 bg-light rounded border mb-3">
+                                <h2 class="h6 fw-bold text-success mb-3">Student Profile</h2>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label fw-semibold small">First Name</label>
+                                        <input type="text" name="first_name" id="first_name" class="form-control" value="{{ st.firstName }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label fw-semibold small">Last Name</label>
+                                        <input type="text" name="last_name" id="last_name" class="form-control" value="{{ st.lastName }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="year_level" class="form-label fw-semibold small">Year Level</label>
+                                        <input type="text" name="year_level" id="year_level" class="form-control" value="{{ st.yearLevel }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="section_id" class="form-label fw-semibold small">Assigned Section</label>
+                                        <select name="section_id" id="section_id" class="form-select">
+                                            <option value="">-- No Section Assigned --</option>
+                                            {% for s in sections %}
+                                                <option value="{{ s.id }}" {{ st.section and st.section.id == s.id ? 'selected' : '' }}>
+                                                    {{ s.name }} ({{ s.academicYear }})
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        {% elseif editUser.teacherProfile %}
+                            {% set tc = editUser.teacherProfile %}
+                            <div class="p-3 bg-light rounded border mb-3">
+                                <h2 class="h6 fw-bold text-info mb-3">Faculty Profile</h2>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label fw-semibold small">First Name</label>
+                                        <input type="text" name="first_name" id="first_name" class="form-control" value="{{ tc.firstName }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label fw-semibold small">Last Name</label>
+                                        <input type="text" name="last_name" id="last_name" class="form-control" value="{{ tc.lastName }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="title" class="form-label fw-semibold small">Title</label>
+                                        <input type="text" name="title" id="title" class="form-control" value="{{ tc.title }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="department" class="form-label fw-semibold small">Department</label>
+                                        <input type="text" name="department" id="department" class="form-control" value="{{ tc.department }}">
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" name="is_active" id="is_active" class="form-check-input" value="1" {{ editUser.isActive ? 'checked' : '' }}>
+                            <label for="is_active" class="form-check-label fw-semibold">Account Active</label>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{{ path('admin_users') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary fw-semibold px-4">
+                                <i class="bi bi-save2-fill me-1" aria-hidden="true"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

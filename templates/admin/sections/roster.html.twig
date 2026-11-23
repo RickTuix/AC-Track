@@ -1,0 +1,122 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Class Roster: {{ section.name }} — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin_dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin_sections') }}">Sections</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ section.name }} Roster</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">{{ section.name }} — Class Roster</h1>
+            <p class="text-muted mb-0">{{ section.academicYear }} &bull; {{ section.semester }} &bull; {{ students|length }} Enrolled Students</p>
+        </div>
+        <div>
+            <a href="{{ path('admin_sections') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Back to Sections
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Enrolled Students Table -->
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-people-fill text-primary" aria-hidden="true"></i>
+                        Enrolled Students (Class List)
+                    </h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" aria-label="Section Students Roster">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Student Number</th>
+                                    <th scope="col">Full Name</th>
+                                    <th scope="col">Year Level</th>
+                                    <th scope="col" class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if students is empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">
+                                            No students currently enrolled in this section.
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    {% for index, st in students %}
+                                        <tr>
+                                            <td class="text-muted small">{{ index + 1 }}</td>
+                                            <td class="font-monospace fw-bold">{{ st.studentNumber }}</td>
+                                            <td class="fw-semibold">{{ st.lastName }}, {{ st.firstName }}</td>
+                                            <td>{{ st.yearLevel }}</td>
+                                            <td class="text-end">
+                                                <form method="post" action="{{ path('admin_section_roster', {'id': section.id}) }}" class="d-inline" onsubmit="return confirm('Remove this student from the section?');">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('roster_action_' ~ section.id) }}">
+                                                    <input type="hidden" name="action" value="remove">
+                                                    <input type="hidden" name="student_id" value="{{ st.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove from section">
+                                                        <i class="bi bi-person-dash" aria-hidden="true"></i> Remove
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Unassigned Student Box -->
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h6 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
+                        Enroll Student in {{ section.name }}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    {% if unassignedStudents is empty %}
+                        <p class="text-muted small mb-0">
+                            All registered students are currently assigned to sections. You can register new students under <a href="{{ path('admin_user_new') }}">User Management</a>.
+                        </p>
+                    {% else %}
+                        <form method="post" action="{{ path('admin_section_roster', {'id': section.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('roster_action_' ~ section.id) }}">
+                            <input type="hidden" name="action" value="add">
+
+                            <div class="mb-3">
+                                <label for="student_id" class="form-label fw-semibold small">Select Unassigned Student</label>
+                                <select name="student_id" id="student_id" class="form-select form-select-sm" required>
+                                    <option value="">-- Choose Student --</option>
+                                    {% for ust in unassignedStudents %}
+                                        <option value="{{ ust.id }}">{{ ust.lastName }}, {{ ust.firstName }} ({{ ust.studentNumber }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">
+                                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add to Class Roster
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

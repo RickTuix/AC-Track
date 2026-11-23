@@ -1,0 +1,110 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Incomplete Requirements — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">My Incomplete (INC) Requirements</h1>
+            <p class="text-muted mb-0">Track all missing items, teacher guidelines, and submission statuses for grade completion.</p>
+        </div>
+        <div>
+            <a href="{{ path('student_grades') }}" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+                <i class="bi bi-card-checklist" aria-hidden="true"></i> Back to Grade Sheet
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="{{ path('student_incompletes') }}" class="btn btn-sm {{ currentFilter is empty ? 'btn-dark' : 'btn-outline-secondary' }}">
+            All Requirements
+        </a>
+        <a href="{{ path('student_incompletes', {'status': 'PENDING'}) }}" class="btn btn-sm {{ currentFilter == 'PENDING' ? 'btn-warning text-dark' : 'btn-outline-warning text-dark' }}">
+            <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i> Pending Action
+        </a>
+        <a href="{{ path('student_incompletes', {'status': 'SUBMITTED'}) }}" class="btn btn-sm {{ currentFilter == 'SUBMITTED' ? 'btn-info text-dark' : 'btn-outline-info text-dark' }}">
+            <i class="bi bi-arrow-up-circle me-1" aria-hidden="true"></i> Submitted for Review
+        </a>
+        <a href="{{ path('student_incompletes', {'status': 'COMPLETED'}) }}" class="btn btn-sm {{ currentFilter == 'COMPLETED' ? 'btn-success' : 'btn-outline-success' }}">
+            <i class="bi bi-check-circle me-1" aria-hidden="true"></i> Completed / Resolved
+        </a>
+    </div>
+
+    <!-- Requirements Card List / Table -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            {% if incompletes is empty %}
+                <div class="p-5 text-center text-muted">
+                    <i class="bi bi-journal-check fs-1 text-success mb-3 d-block" aria-hidden="true"></i>
+                    <h2 class="h5 fw-bold text-dark mb-1">No Incomplete Records Found</h2>
+                    <p class="mb-0 text-muted">
+                        {% if currentFilter %}
+                            There are currently no requirements matching status "<strong>{{ currentFilter }}</strong>".
+                        {% else %}
+                            You have no recorded incomplete grade requirements.
+                        {% endif %}
+                    </p>
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" aria-label="Incomplete Requirements Table">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Subject &amp; Period</th>
+                                <th scope="col">Missing Item &amp; Category</th>
+                                <th scope="col">Instructor</th>
+                                <th scope="col">Deadline</th>
+                                <th scope="col" class="text-center">Status</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inc in incompletes %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ inc.subject.code }}</div>
+                                        <div class="small text-muted">{{ inc.gradingPeriod.name }} Period</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ inc.missingItemTitle }}</div>
+                                        <span class="badge bg-light text-dark border">{{ inc.missingCategory }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="small fw-medium">{{ inc.teacher ? inc.teacher.fullName : 'N/A' }}</div>
+                                        <div class="text-muted fs-8">{{ inc.teacher ? inc.teacher.department : '' }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold {{ inc.isOverdue() ? 'text-danger' : (inc.isApproachingDeadline(48) ? 'text-warning' : 'text-dark') }}">
+                                            {{ inc.deadline|date('M d, Y') }}
+                                        </div>
+                                        <div class="small text-muted">{{ inc.deadline|date('h:i A') }}</div>
+                                        {% if inc.isOverdue() %}
+                                            <span class="badge badge-overdue mt-1 d-inline-flex align-items-center">
+                                                <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i> Overdue
+                                            </span>
+                                        {% elseif inc.isApproachingDeadline(48) %}
+                                            <span class="badge badge-approaching mt-1 d-inline-flex align-items-center">
+                                                <i class="bi bi-clock-history me-1" aria-hidden="true"></i> Due Soon
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ status_badge(inc.status) }}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ path('student_incomplete_detail', {'id': inc.id}) }}" class="btn btn-sm btn-primary">
+                                            View &amp; Submit &rarr;
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

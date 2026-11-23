@@ -1,0 +1,189 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Official Grade Report — {{ student.fullName }} — AC.TRACK{% endblock %}
+
+{% block stylesheets %}
+<style>
+    @media print {
+        .sidebar, .top-navbar, footer, .no-print {
+            display: none !important;
+        }
+        .main-content-area {
+            background-color: white !important;
+            padding: 0 !important;
+        }
+        body {
+            background-color: white !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <!-- Actions Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <a href="{{ path('student_grades') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Back to Grades
+            </a>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-outline-dark btn-sm d-flex align-items-center gap-1">
+                <i class="bi bi-printer-fill" aria-hidden="true"></i> Print This Page
+            </button>
+            <a href="{{ path('student_grade_report', {'pdf': 1}) }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
+                <i class="bi bi-download" aria-hidden="true"></i> Download PDF Copy
+            </a>
+        </div>
+    </div>
+
+    <!-- Official Report Card Form -->
+    <div class="card p-4 p-md-5 bg-white border">
+        <!-- University / System Header -->
+        <div class="text-center pb-4 mb-4 border-bottom">
+            <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
+                <i class="bi bi-mortarboard-fill fs-2 text-primary" aria-hidden="true"></i>
+                <h1 class="h3 fw-bold mb-0">AC.TRACK ACADEMIC SYSTEM</h1>
+            </div>
+            <div class="text-muted small text-uppercase fw-semibold tracking-wider">Office of the Registrar &bull; Student Academic Standing Slip</div>
+            <div class="small text-muted">Academic Year 2024-2025 &bull; First Semester</div>
+        </div>
+
+        <!-- Student Meta Information -->
+        <div class="row g-3 mb-4 p-3 bg-light rounded border">
+            <div class="col-sm-6 col-md-3">
+                <span class="small text-muted text-uppercase fw-bold d-block">Student Name</span>
+                <span class="fw-bold">{{ student.fullName }}</span>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <span class="small text-muted text-uppercase fw-bold d-block">Student ID</span>
+                <span class="font-monospace fw-semibold">{{ student.studentNumber }}</span>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <span class="small text-muted text-uppercase fw-bold d-block">Program &amp; Section</span>
+                <span>{{ student.section ? student.section.name : 'N/A' }}</span>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <span class="small text-muted text-uppercase fw-bold d-block">Year Level</span>
+                <span>{{ student.yearLevel }}</span>
+            </div>
+        </div>
+
+        <!-- Grades Table -->
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered table-sm align-middle" aria-label="Official Student Grades">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col" style="width: 120px;">Code</th>
+                        <th scope="col">Subject Title</th>
+                        <th scope="col" class="text-center" style="width: 60px;">Units</th>
+                        {% for period in periods %}
+                            <th scope="col" class="text-center" style="width: 100px;">{{ period.name }}</th>
+                        {% endfor %}
+                        <th scope="col" class="text-center" style="width: 110px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subjectId, subject in subjects %}
+                        <tr>
+                            <td class="font-monospace fw-bold">{{ subject.code }}</td>
+                            <td>{{ subject.title }}</td>
+                            <td class="text-center">{{ subject.units }}</td>
+                            {% set hasInc = false %}
+                            {% for period in periods %}
+                                {% set grade = matrix[subjectId][period.id] ?? null %}
+                                <td class="text-center font-monospace">
+                                    {% if grade %}
+                                        {% if grade.isInc %}
+                                            {% set hasInc = true %}
+                                            <span class="text-danger fw-bold">INC</span>
+                                        {% else %}
+                                            <span>{{ grade.numericalValue|number_format(2) }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">&mdash;</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                            <td class="text-center">
+                                {% if hasInc %}
+                                    <span class="badge bg-danger">INCOMPLETE</span>
+                                {% else %}
+                                    <span class="badge bg-success">PASSED</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Incomplete Requirements Section if any -->
+        {% set hasIncs = false %}
+        {% for subjectId, pList in incMap %}
+            {% if pList is not empty %}{% set hasIncs = true %}{% endif %}
+        {% endfor %}
+
+        {% if hasIncs %}
+            <div class="mb-4">
+                <h2 class="h6 fw-bold text-danger text-uppercase mb-2">
+                    <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i> Associated Incomplete Requirements Summary
+                </h2>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Subject</th>
+                                <th>Period</th>
+                                <th>Requirement Item</th>
+                                <th>Status</th>
+                                <th>Deadline</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subjectId, pList in incMap %}
+                                {% for periodId, inc in pList %}
+                                    <tr>
+                                        <td class="fw-bold">{{ inc.subject.code }}</td>
+                                        <td>{{ inc.gradingPeriod.name }}</td>
+                                        <td>{{ inc.missingItemTitle }} ({{ inc.missingCategory }})</td>
+                                        <td>{{ status_badge(inc.status) }}</td>
+                                        <td class="{{ inc.isOverdue() ? 'text-danger fw-bold' : '' }}">{{ inc.deadline|date('M d, Y') }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Verification Signature Footer -->
+        <div class="row pt-5 mt-4 text-center text-muted small border-top">
+            <div class="col-4">
+                <div class="border-top border-dark mx-auto w-75 pt-1">
+                    <strong>{{ student.fullName }}</strong>
+                    <div>Student Signature</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="border-top border-dark mx-auto w-75 pt-1">
+                    <strong>Office of the Registrar</strong>
+                    <div>Verified System Record</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="border-top border-dark mx-auto w-75 pt-1">
+                    <strong>Date Generated</strong>
+                    <div>{{ "now"|date('F d, Y') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

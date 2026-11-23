@@ -1,0 +1,129 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Manage INC Records — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Incomplete-Grade (INC) Resolution Hub</h1>
+            <p class="text-muted mb-0">Track issued requirements, review student submissions, and verify completion.</p>
+        </div>
+        <div>
+            <a href="{{ path('teacher_incomplete_new') }}" class="btn btn-primary d-flex align-items-center gap-1">
+                <i class="bi bi-plus-circle-fill" aria-hidden="true"></i> Issue New Incomplete
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="get" action="{{ path('teacher_incompletes') }}" class="row g-2 align-items-center">
+                <div class="col-12 col-md-4">
+                    <label for="statusSelect" class="form-label small fw-bold text-muted mb-1">Status Filter</label>
+                    <select name="status" id="statusSelect" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+                        <option value="PENDING" {{ currentStatus == 'PENDING' ? 'selected' : '' }}>Pending Action</option>
+                        <option value="SUBMITTED" {{ currentStatus == 'SUBMITTED' ? 'selected' : '' }}>Submitted for Review</option>
+                        <option value="COMPLETED" {{ currentStatus == 'COMPLETED' ? 'selected' : '' }}>Completed / Resolved</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="subjectSelect" class="form-label small fw-bold text-muted mb-1">Subject Filter</label>
+                    <select name="subject" id="subjectSelect" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">All Assigned Subjects</option>
+                        {% for ss in assignments %}
+                            <option value="{{ ss.subject.code }}" {{ currentSubject == ss.subject.code ? 'selected' : '' }}>
+                                {{ ss.subject.code }} ({{ ss.section.name }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-4 d-flex align-items-end">
+                    <a href="{{ path('teacher_incompletes') }}" class="btn btn-sm btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-1" aria-hidden="true"></i> Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table of INC Records -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            {% if incompletes is empty %}
+                <div class="p-5 text-center text-muted">
+                    <i class="bi bi-clipboard2-check fs-1 text-secondary mb-2 d-block" aria-hidden="true"></i>
+                    <h2 class="h5 fw-bold text-dark mb-1">No Incomplete Records Found</h2>
+                    <p class="mb-0 text-muted">There are no records matching your current filter criteria.</p>
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" aria-label="Instructor INC Management Table">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Student</th>
+                                <th scope="col">Subject &amp; Period</th>
+                                <th scope="col">Missing Item Title &amp; Category</th>
+                                <th scope="col">Deadline</th>
+                                <th scope="col" class="text-center">Status</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inc in incompletes %}
+                                <tr class="{{ inc.status.value == 'SUBMITTED' ? 'table-info table-opacity-10' : '' }}">
+                                    <td>
+                                        <div class="fw-bold">{{ inc.student.fullName }}</div>
+                                        <div class="small text-muted font-monospace">{{ inc.student.studentNumber }} &bull; {{ inc.student.section ? inc.student.section.name : '' }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">{{ inc.subject.code }}</div>
+                                        <div class="small text-muted">{{ inc.gradingPeriod.name }} Period</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">{{ inc.missingItemTitle }}</div>
+                                        <span class="badge bg-light text-dark border">{{ inc.missingCategory }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold {{ inc.isOverdue() ? 'text-danger' : (inc.isApproachingDeadline(48) ? 'text-warning' : 'text-dark') }}">
+                                            {{ inc.deadline|date('M d, Y') }}
+                                        </div>
+                                        <div class="small text-muted">{{ inc.deadline|date('h:i A') }}</div>
+                                        {% if inc.isOverdue() %}
+                                            <span class="badge badge-overdue mt-1 d-inline-flex align-items-center">
+                                                <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i> Overdue
+                                            </span>
+                                        {% elseif inc.isApproachingDeadline(48) %}
+                                            <span class="badge badge-approaching mt-1 d-inline-flex align-items-center">
+                                                <i class="bi bi-clock-history me-1" aria-hidden="true"></i> Due Soon
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ status_badge(inc.status) }}
+                                        {% if inc.status.value == 'SUBMITTED' %}
+                                            <div class="small text-info fw-bold mt-1">Review Needed</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <a href="{{ path('teacher_incomplete_detail', {'id': inc.id}) }}" class="btn btn-sm btn-primary">
+                                                {{ inc.status.value == 'SUBMITTED' ? 'Review & Resolve' : 'View' }} &rarr;
+                                            </a>
+                                            <a href="{{ path('teacher_incomplete_edit', {'id': inc.id}) }}" class="btn btn-sm btn-outline-secondary" title="Edit INC Details">
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

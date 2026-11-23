@@ -1,0 +1,147 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Issue Incomplete Grade Requirement — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('teacher_dashboard') }}">Instructor Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('teacher_incompletes') }}">INC Records</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Issue New INC</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h1 class="h4 fw-bold mb-1 d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-plus-fill text-primary" aria-hidden="true"></i>
+                        Issue New Incomplete (INC) Grade Record
+                    </h1>
+                    <p class="text-muted small mb-0">Define the missing academic requirement, explicit instructions, and submission deadline for student resolution.</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" action="{{ path('teacher_incomplete_new') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('create_inc') }}">
+
+                        <!-- Row 1: Assignment (Subject & Section) & Grading Period -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-7">
+                                <label for="assignment_id" class="form-label fw-semibold">Class / Subject Assignment <span class="text-danger">*</span></label>
+                                <select name="assignment_id" id="assignment_id" class="form-select" required onchange="filterStudents(this.value)">
+                                    <option value="">-- Select Assigned Subject &amp; Section --</option>
+                                    {% for ss in assignments %}
+                                        <option value="{{ ss.id }}" data-section-id="{{ ss.section.id }}">
+                                            {{ ss.subject.code }} — {{ ss.subject.title }} (Section: {{ ss.section.name }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="period_id" class="form-label fw-semibold">Grading Period <span class="text-danger">*</span></label>
+                                <select name="period_id" id="period_id" class="form-select" required>
+                                    <option value="">-- Select Grading Period --</option>
+                                    {% for p in periods %}
+                                        <option value="{{ p.id }}">{{ p.name }} Period</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Student Selection -->
+                        <div class="mb-3">
+                            <label for="student_id" class="form-label fw-semibold">Enrolled Student <span class="text-danger">*</span></label>
+                            <select name="student_id" id="student_id" class="form-select" required>
+                                <option value="">-- Select Student --</option>
+                                {% for ss in assignments %}
+                                    {% for st in ss.section.students %}
+                                        <option value="{{ st.id }}" class="student-opt student-section-{{ ss.section.id }}" data-section="{{ ss.section.id }}">
+                                            {{ st.lastName }}, {{ st.firstName }} ({{ st.studentNumber }}) — {{ ss.section.name }}
+                                        </option>
+                                    {% endfor %}
+                                {% endfor %}
+                            </select>
+                            <div class="form-text small">Select the student who incurred the incomplete mark.</div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Row 3: Missing Item Category & Title -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="missing_category" class="form-label fw-semibold">Item Category <span class="text-danger">*</span></label>
+                                <select name="missing_category" id="missing_category" class="form-select" required>
+                                    <option value="Activity">Activity</option>
+                                    <option value="Assignment">Assignment</option>
+                                    <option value="Project">Project</option>
+                                    <option value="Examination">Examination</option>
+                                    <option value="Laboratory">Laboratory Report</option>
+                                    <option value="Other">Other Requirement</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label for="missing_item_title" class="form-label fw-semibold">Requirement Item Title <span class="text-danger">*</span></label>
+                                <input type="text" name="missing_item_title" id="missing_item_title" class="form-control" placeholder="e.g., Midterm Project: Database Design & Normalization" required>
+                            </div>
+                        </div>
+
+                        <!-- Row 4: Teacher Explanation -->
+                        <div class="mb-3">
+                            <label for="teacher_explanation" class="form-label fw-semibold">Teacher Explanation &amp; Context <span class="text-danger">*</span></label>
+                            <textarea name="teacher_explanation" id="teacher_explanation" class="form-control" rows="3" placeholder="Explain why the student received an INC (e.g., unsubmitted project milestone, absence during practical exam)..." required></textarea>
+                        </div>
+
+                        <!-- Row 5: Required Student Action -->
+                        <div class="mb-3">
+                            <label for="required_action" class="form-label fw-semibold">Required Student Action (Clear Instructions) <span class="text-danger">*</span></label>
+                            <textarea name="required_action" id="required_action" class="form-control" rows="3" placeholder="Specify exact deliverables, formatting rules, rubric items, and how the student must complete the task..." required></textarea>
+                        </div>
+
+                        <!-- Row 6: Deadline -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="deadline" class="form-label fw-semibold">Submission Deadline <span class="text-danger">*</span></label>
+                                <input type="datetime-local" name="deadline" id="deadline" class="form-control" required>
+                                <div class="form-text small">Students will receive automated notifications before and on this deadline.</div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{{ path('teacher_incompletes') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary fw-semibold px-4">
+                                <i class="bi bi-check2-circle me-1" aria-hidden="true"></i> Save and Issue Incomplete Record
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterStudents(assignmentId) {
+    const select = document.getElementById('assignment_id');
+    const selectedOption = select.options[select.selectedIndex];
+    const sectionId = selectedOption ? selectedOption.getAttribute('data-section-id') : null;
+
+    const studentSelect = document.getElementById('student_id');
+    const options = studentSelect.querySelectorAll('.student-opt');
+
+    options.forEach(opt => {
+        if (!sectionId || opt.getAttribute('data-section') === sectionId) {
+            opt.style.display = '';
+            opt.disabled = false;
+        } else {
+            opt.style.display = 'none';
+            opt.disabled = true;
+        }
+    });
+
+    studentSelect.value = '';
+}
+</script>
+{% endblock %}

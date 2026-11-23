@@ -1,0 +1,110 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Grades — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Academic Grade Report</h1>
+            <p class="text-muted mb-0">Review grades across all grading periods for Academic Year 2024-2025.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('student_grade_report') }}" class="btn btn-outline-primary d-flex align-items-center gap-1">
+                <i class="bi bi-printer" aria-hidden="true"></i> Print Grade Slip
+            </a>
+            <a href="{{ path('student_grade_report', {'pdf': 1}) }}" class="btn btn-primary d-flex align-items-center gap-1">
+                <i class="bi bi-file-earmark-pdf-fill" aria-hidden="true"></i> Download PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <span class="text-muted small text-uppercase fw-bold">Student Record</span>
+                    <div class="fw-bold fs-5">{{ student.fullName }} ({{ student.studentNumber }})</div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="text-muted small text-uppercase fw-bold">Curriculum / Section</span>
+                    <div class="fw-semibold text-secondary">{{ student.section ? student.section.name : 'Unassigned' }} &bull; {{ student.yearLevel }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" aria-label="Grades Matrix Table">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="min-width: 200px;">Subject</th>
+                            <th scope="col" class="text-center" style="width: 80px;">Units</th>
+                            {% for period in periods %}
+                                <th scope="col" class="text-center" style="min-width: 140px;">{{ period.name }}</th>
+                            {% endfor %}
+                            <th scope="col" class="text-center" style="min-width: 120px;">Final Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if subjects is empty %}
+                            <tr>
+                                <td colspan="{{ 3 + periods|length }}" class="text-center py-4 text-muted">
+                                    No subject enrollments or recorded grades found.
+                                </td>
+                            </tr>
+                        {% else %}
+                            {% for subjectId, subject in subjects %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ subject.code }}</div>
+                                        <div class="small text-muted">{{ subject.title }}</div>
+                                    </td>
+                                    <td class="text-center fw-medium">{{ subject.units }}</td>
+                                    {% set hasAnyInc = false %}
+                                    {% for period in periods %}
+                                        {% set grade = matrix[subjectId][period.id] ?? null %}
+                                        {% set inc = incMap[subjectId][period.id] ?? null %}
+                                        <td class="text-center">
+                                            {% if grade %}
+                                                {% if grade.isInc %}
+                                                    {% set hasAnyInc = true %}
+                                                    <div class="mb-1">
+                                                        <span class="badge bg-danger text-white">INC</span>
+                                                    </div>
+                                                    {% if inc %}
+                                                        <a href="{{ path('student_incomplete_detail', {'id': inc.id}) }}" class="btn btn-xs btn-outline-danger small py-0 px-1" style="font-size: 0.75rem;">
+                                                            {{ inc.status.value }} &rarr;
+                                                        </a>
+                                                    {% else %}
+                                                        <small class="text-muted d-block">Unresolved</small>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <div class="fw-bold fs-6">{{ grade.numericalValue|number_format(2) }}</div>
+                                                    <small class="badge bg-success-subtle text-success">{{ grade.remarks }}</small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted small">&mdash;</span>
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                    <td class="text-center">
+                                        {% if hasAnyInc %}
+                                            <span class="badge bg-warning text-dark px-2 py-1">INCOMPLETE</span>
+                                        {% else %}
+                                            <span class="badge bg-success text-white px-2 py-1">IN GOOD STANDING</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-light p-3 small text-muted">
+            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+            Grades marked <strong>INC</strong> have an associated resolution record with specific teacher instructions, required items, and deadlines.
+        </div>
+    </div>
+</div>
+{% endblock %}

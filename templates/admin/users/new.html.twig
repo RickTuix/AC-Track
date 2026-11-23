@@ -1,0 +1,131 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create User — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin_dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin_users') }}">Users</a></li>
+            <li class="breadcrumb-item active" aria-current="page">New User</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h1 class="h4 fw-bold mb-1">Create User Account</h1>
+                    <p class="text-muted small mb-0">Register an Administrator, Faculty Member, or Student.</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" action="{{ path('admin_user_new') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('new_user') }}">
+
+                        <!-- Core User Fields -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="username" class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+                                <input type="text" name="username" id="username" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" name="email" id="email" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="password" class="form-label fw-semibold">Initial Password <span class="text-danger">*</span></label>
+                                <input type="password" name="password" id="password" class="form-control" required minlength="6">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="role" class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
+                                <select name="role" id="role" class="form-select" required onchange="toggleRoleFields(this.value)">
+                                    <option value="ROLE_STUDENT">Student (ROLE_STUDENT)</option>
+                                    <option value="ROLE_TEACHER">Teacher / Faculty (ROLE_TEACHER)</option>
+                                    <option value="ROLE_ADMIN">Registrar / Administrator (ROLE_ADMIN)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+                                <input type="text" name="first_name" id="first_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" name="last_name" id="last_name" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <!-- Student Profile Fields -->
+                        <div id="studentFields" class="p-3 bg-light rounded border mb-3">
+                            <h2 class="h6 fw-bold text-success mb-3">Student Profile Information</h2>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="student_number" class="form-label fw-semibold small">Student Number <span class="text-danger">*</span></label>
+                                    <input type="text" name="student_number" id="student_number" class="form-control" placeholder="e.g. 2024-00120">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="year_level" class="form-label fw-semibold small">Year Level</label>
+                                    <select name="year_level" id="year_level" class="form-select">
+                                        <option value="1st Year">1st Year</option>
+                                        <option value="2nd Year">2nd Year</option>
+                                        <option value="3rd Year" selected>3rd Year</option>
+                                        <option value="4th Year">4th Year</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="section_id" class="form-label fw-semibold small">Assigned Section</label>
+                                    <select name="section_id" id="section_id" class="form-select">
+                                        <option value="">-- No Section Assigned --</option>
+                                        {% for s in sections %}
+                                            <option value="{{ s.id }}">{{ s.name }} ({{ s.academicYear }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Teacher Profile Fields -->
+                        <div id="teacherFields" class="p-3 bg-light rounded border mb-3" style="display: none;">
+                            <h2 class="h6 fw-bold text-info mb-3">Faculty Profile Information</h2>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="employee_number" class="form-label fw-semibold small">Employee Number <span class="text-danger">*</span></label>
+                                    <input type="text" name="employee_number" id="employee_number" class="form-control" placeholder="e.g. EMP-2024-005">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="title" class="form-label fw-semibold small">Title / Honorific</label>
+                                    <input type="text" name="title" id="title" class="form-control" placeholder="Prof. / Dr. / Engr.">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="department" class="form-label fw-semibold small">Department</label>
+                                    <input type="text" name="department" id="department" class="form-control" placeholder="e.g. Computer Science">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{{ path('admin_users') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary fw-semibold px-4">
+                                <i class="bi bi-check2-circle me-1" aria-hidden="true"></i> Create User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleRoleFields(role) {
+    document.getElementById('studentFields').style.display = role === 'ROLE_STUDENT' ? 'block' : 'none';
+    document.getElementById('teacherFields').style.display = role === 'ROLE_TEACHER' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

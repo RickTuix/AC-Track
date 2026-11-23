@@ -1,0 +1,150 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Instructor Dashboard — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">{{ teacher.title }} {{ teacher.firstName }} {{ teacher.lastName }}</h1>
+            <p class="text-muted mb-0">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-2">{{ teacher.employeeNumber }}</span>
+                Department: <strong>{{ teacher.department }}</strong> &bull; Instructor Workspace
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('teacher_incomplete_new') }}" class="btn btn-primary d-flex align-items-center gap-1">
+                <i class="bi bi-plus-circle-fill" aria-hidden="true"></i> Issue New INC
+            </a>
+            <a href="{{ path('teacher_incompletes') }}" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+                <i class="bi bi-clipboard-pulse" aria-hidden="true"></i> Manage Resolutions
+            </a>
+        </div>
+    </div>
+
+    <!-- INC Stats Overview -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-4">
+            <div class="card h-100 border-start border-warning border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between text-muted mb-2">
+                        <span class="small text-uppercase fw-bold">Active Pending INCs</span>
+                        <i class="bi bi-hourglass-split text-warning fs-4" aria-hidden="true"></i>
+                    </div>
+                    <div class="h3 fw-bold text-dark mb-1">{{ pendingCount }}</div>
+                    <small class="text-muted">Awaiting student submissions</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-4">
+            <div class="card h-100 border-start border-info border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between text-muted mb-2">
+                        <span class="small text-uppercase fw-bold">Submissions Awaiting Review</span>
+                        <i class="bi bi-arrow-up-circle-fill text-info fs-4" aria-hidden="true"></i>
+                    </div>
+                    <div class="h3 fw-bold text-info mb-1">{{ submittedCount }}</div>
+                    <small class="text-muted">Ready for evaluation</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-4">
+            <div class="card h-100 border-start border-success border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between text-muted mb-2">
+                        <span class="small text-uppercase fw-bold">Completed / Resolved</span>
+                        <i class="bi bi-check-circle-fill text-success fs-4" aria-hidden="true"></i>
+                    </div>
+                    <div class="h3 fw-bold text-success mb-1">{{ completedCount }}</div>
+                    <small class="text-muted">Successfully cleared</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Assigned Subjects & Sections Matrix -->
+        <div class="col-12 col-lg-7">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-collection-fill text-primary" aria-hidden="true"></i>
+                        My Assigned Classes &amp; Grade Sheets
+                    </h2>
+                </div>
+                <div class="card-body p-0">
+                    {% if assignments is empty %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-folder-x fs-1 mb-2 d-block text-secondary" aria-hidden="true"></i>
+                            <p class="mb-0">You have no assigned subjects or sections at this time.</p>
+                        </div>
+                    {% else %}
+                        <div class="list-group list-group-flush">
+                            {% for ss in assignments %}
+                                <div class="list-group-item p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-primary">{{ ss.subject.code }}</span>
+                                            <span class="fw-bold fs-6">{{ ss.subject.title }}</span>
+                                        </div>
+                                        <div class="small text-muted">
+                                            Section: <strong>{{ ss.section.name }}</strong> &bull;
+                                            Term: {{ ss.section.academicYear }} ({{ ss.section.semester }}) &bull;
+                                            Students: <strong>{{ ss.section.students|length }}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ path('teacher_grades_matrix', {'sectionId': ss.section.id, 'subjectId': ss.subject.id}) }}" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
+                                            <i class="bi bi-table" aria-hidden="true"></i> Grade Sheet
+                                        </a>
+                                        <a href="{{ path('teacher_incompletes', {'subject': ss.subject.code}) }}" class="btn btn-sm btn-outline-warning text-dark d-flex align-items-center gap-1">
+                                            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> INCs
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Submissions Requiring Attention -->
+        <div class="col-12 col-lg-5">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-inbox-fill text-info" aria-hidden="true"></i>
+                        Submitted Resolutions for Review
+                    </h2>
+                </div>
+                <div class="card-body p-0">
+                    {% if awaitingReview is empty %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-check-all fs-1 text-success mb-2 d-block" aria-hidden="true"></i>
+                            <p class="mb-0">No submissions currently awaiting review.</p>
+                        </div>
+                    {% else %}
+                        <div class="list-group list-group-flush">
+                            {% for inc in awaitingReview %}
+                                <div class="list-group-item p-3">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <div class="fw-bold">{{ inc.student.fullName }}</div>
+                                        <span class="badge bg-info text-dark">SUBMITTED</span>
+                                    </div>
+                                    <div class="small text-muted mb-2">
+                                        {{ inc.subject.code }} &bull; {{ inc.missingItemTitle }} &bull; Submitted {{ inc.submittedAt ? inc.submittedAt|date('M d, H:i') : '' }}
+                                    </div>
+                                    <a href="{{ path('teacher_incomplete_detail', {'id': inc.id}) }}" class="btn btn-sm btn-primary w-100">
+                                        Review Submission &rarr;
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

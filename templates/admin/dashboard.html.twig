@@ -1,0 +1,138 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Registrar Dashboard — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Registrar &amp; Administrator Hub</h1>
+            <p class="text-muted mb-0">System maintenance, academic records, and resolution tracking.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('admin_reports_progress') }}" class="btn btn-primary d-flex align-items-center gap-1">
+                <i class="bi bi-file-earmark-bar-graph-fill" aria-hidden="true"></i> Academic Progress Report
+            </a>
+            <a href="{{ path('admin_audit_logs') }}" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+                <i class="bi bi-shield-check" aria-hidden="true"></i> View Audit Log
+            </a>
+        </div>
+    </div>
+
+    <!-- Counters Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-start border-primary border-4">
+                <div class="card-body">
+                    <span class="small text-muted text-uppercase fw-bold">Students</span>
+                    <div class="h3 fw-bold text-dark my-1">{{ totalStudents }}</div>
+                    <a href="{{ path('admin_users', {'role': 'ROLE_STUDENT'}) }}" class="small text-decoration-none">Manage Students &rarr;</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-start border-info border-4">
+                <div class="card-body">
+                    <span class="small text-muted text-uppercase fw-bold">Faculty Members</span>
+                    <div class="h3 fw-bold text-dark my-1">{{ totalTeachers }}</div>
+                    <a href="{{ path('admin_users', {'role': 'ROLE_TEACHER'}) }}" class="small text-decoration-none">Manage Faculty &rarr;</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-start border-success border-4">
+                <div class="card-body">
+                    <span class="small text-muted text-uppercase fw-bold">Subjects</span>
+                    <div class="h3 fw-bold text-dark my-1">{{ totalSubjects }}</div>
+                    <a href="{{ path('admin_subjects') }}" class="small text-decoration-none">Course Catalog &rarr;</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-start border-secondary border-4">
+                <div class="card-body">
+                    <span class="small text-muted text-uppercase fw-bold">Sections / Classes</span>
+                    <div class="h3 fw-bold text-dark my-1">{{ totalSections }}</div>
+                    <a href="{{ path('admin_sections') }}" class="small text-decoration-none">View Rosters &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INC Status Breakdown -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-pie-chart-fill text-primary" aria-hidden="true"></i>
+                        Incomplete-Grade (INC) Resolution Breakdown
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-around py-3 mb-3 border-bottom">
+                        <div class="text-center">
+                            <div class="h3 fw-bold text-warning mb-0">{{ pendingIncs }}</div>
+                            <small class="text-muted fw-semibold">Pending Action</small>
+                        </div>
+                        <div class="vr"></div>
+                        <div class="text-center">
+                            <div class="h3 fw-bold text-info mb-0">{{ submittedIncs }}</div>
+                            <small class="text-muted fw-semibold">Submitted Review</small>
+                        </div>
+                        <div class="vr"></div>
+                        <div class="text-center">
+                            <div class="h3 fw-bold text-success mb-0">{{ completedIncs }}</div>
+                            <small class="text-muted fw-semibold">Completed</small>
+                        </div>
+                    </div>
+                    {% if totalIncs > 0 %}
+                        {% set resolutionRate = ((completedIncs / totalIncs) * 100)|round(1) %}
+                        <div class="mb-2 d-flex justify-content-between small">
+                            <span class="fw-semibold">Resolution Rate:</span>
+                            <span class="fw-bold text-success">{{ resolutionRate }}%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;" role="progressbar" aria-valuenow="{{ resolutionRate }}" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar bg-success" style="width: {{ resolutionRate }}%"></div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center mb-0">No INC records logged.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Audit Log Entries -->
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-shaded text-dark" aria-hidden="true"></i>
+                        Recent System Audit Events
+                    </h2>
+                    <a href="{{ path('admin_audit_logs') }}" class="small text-decoration-none">Full Log</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recentAudits is empty %}
+                        <div class="p-4 text-center text-muted">No audit events recorded yet.</div>
+                    {% else %}
+                        <div class="list-group list-group-flush small">
+                            {% for log in recentAudits %}
+                                <div class="list-group-item p-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="badge bg-secondary font-monospace">{{ log.action }}</span>
+                                        <span class="text-muted">{{ log.createdAt|date('M d, H:i:s') }}</span>
+                                    </div>
+                                    <div class="text-dark">
+                                        User: <strong>{{ log.user ? log.user.displayName : 'System' }}</strong> &bull; Entity: {{ log.entityType }} #{{ log.entityId }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

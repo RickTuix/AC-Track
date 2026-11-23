@@ -1,0 +1,235 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Resolve INC: {{ record.missingItemTitle }} — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('student_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('student_incompletes') }}">INC Requirements</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ record.subject.code }} - {{ record.missingItemTitle }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-secondary fs-6">{{ record.subject.code }}</span>
+                <span class="badge bg-light text-dark border">{{ record.missingCategory }}</span>
+                {{ status_badge(record.status) }}
+                {% if record.isOverdue() %}
+                    <span class="badge badge-overdue d-inline-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i> Overdue
+                    </span>
+                {% elseif record.isApproachingDeadline(48) %}
+                    <span class="badge badge-approaching d-inline-flex align-items-center">
+                        <i class="bi bi-clock-history me-1" aria-hidden="true"></i> Approaching Deadline
+                    </span>
+                {% endif %}
+            </div>
+            <h1 class="h3 fw-bold mb-0">{{ record.missingItemTitle }}</h1>
+            <p class="text-muted small mb-0">{{ record.subject.title }} &bull; {{ record.gradingPeriod.name }} Period</p>
+        </div>
+        <div>
+            <a href="{{ path('student_incompletes') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Details (Left Col) -->
+        <div class="col-12 col-lg-7">
+            <!-- 1. Teacher Explanation & Instructions Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-text-fill text-primary" aria-hidden="true"></i>
+                        Requirement Overview &amp; Instructions
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <!-- Teacher Explanation -->
+                    <div class="mb-4">
+                        <h3 class="h6 text-muted text-uppercase fw-bold mb-2">Teacher's Explanation &amp; Remarks</h3>
+                        <div class="p-3 bg-light rounded border border-light-subtle">
+                            <p class="mb-0 text-dark" style="white-space: pre-wrap;">{{ record.teacherExplanation }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Required Action -->
+                    <div class="mb-4">
+                        <h3 class="h6 text-primary text-uppercase fw-bold mb-2 d-flex align-items-center gap-1">
+                            <i class="bi bi-list-check" aria-hidden="true"></i> Required Student Action / Steps
+                        </h3>
+                        <div class="p-3 bg-primary-subtle text-primary-emphasis rounded border border-primary-subtle">
+                            <p class="mb-0 fw-medium" style="white-space: pre-wrap;">{{ record.requiredAction }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Record Metadata -->
+                    <div class="row g-3 pt-3 border-top small text-muted">
+                        <div class="col-sm-6">
+                            <span>Instructor Responsible:</span>
+                            <div class="fw-semibold text-dark">{{ record.teacher ? record.teacher.fullName : 'N/A' }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <span>Date Issued:</span>
+                            <div class="fw-semibold text-dark">{{ record.createdAt|date('M d, Y h:i A') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Submission Details / Existing Submission -->
+            {% if record.status.value in ['SUBMITTED', 'COMPLETED'] %}
+                <div class="card shadow-sm border-{{ record.status.value == 'COMPLETED' ? 'success' : 'info' }} mb-4">
+                    <div class="card-header bg-{{ record.status.value == 'COMPLETED' ? 'success-subtle' : 'info-subtle' }} py-3">
+                        <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                            {% if record.status.value == 'COMPLETED' %}
+                                <i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i>
+                                Resolution Completed &amp; Cleared
+                            {% else %}
+                                <i class="bi bi-send-check-fill text-info" aria-hidden="true"></i>
+                                Your Submitted Resolution (Under Review)
+                            {% endif %}
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        {% if record.status.value == 'COMPLETED' %}
+                            <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
+                                <i class="bi bi-patch-check-fill fs-4" aria-hidden="true"></i>
+                                <div>
+                                    <strong>Requirement Successfully Resolved!</strong> This INC has been approved and cleared on {{ record.resolvedAt ? record.resolvedAt|date('M d, Y') : 'recently' }}.
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+                                <i class="bi bi-info-circle-fill fs-4" aria-hidden="true"></i>
+                                <div>
+                                    Your work has been submitted and is currently being evaluated by <strong>{{ record.teacher ? record.teacher.fullName : 'your instructor' }}</strong>.
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <span class="text-muted small fw-bold text-uppercase d-block mb-1">Submission Notes:</span>
+                            <div class="p-3 bg-light rounded border">
+                                {{ record.submissionNote ?: 'No notes provided with submission.' }}
+                            </div>
+                        </div>
+
+                        {% if record.attachmentPath %}
+                            <div class="mb-3">
+                                <span class="text-muted small fw-bold text-uppercase d-block mb-1">Attached Document:</span>
+                                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded border">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-paperclip fs-4 text-primary" aria-hidden="true"></i>
+                                        <span class="fw-semibold">{{ record.attachmentOriginalName ?: record.attachmentPath }}</span>
+                                    </div>
+                                    <a href="{{ path('student_incomplete_download', {'id': record.id}) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-download me-1" aria-hidden="true"></i> Download File
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="small text-muted">
+                            Submitted on: <strong>{{ record.submittedAt ? record.submittedAt|date('M d, Y h:i A') : 'N/A' }}</strong>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Submission Panel / Sidebar (Right Col) -->
+        <div class="col-12 col-lg-5">
+            <!-- Deadline Info Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h6 mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history text-danger" aria-hidden="true"></i>
+                        Resolution Timeline
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between p-3 rounded mb-3 {{ record.isOverdue() ? 'bg-danger-subtle text-danger' : (record.isApproachingDeadline(48) ? 'bg-warning-subtle text-dark' : 'bg-light text-dark') }}">
+                        <div>
+                            <span class="small fw-bold text-uppercase d-block">Submission Deadline</span>
+                            <div class="h5 fw-bold mb-0">{{ record.deadline|date('F d, Y') }}</div>
+                            <small>{{ record.deadline|date('l, h:i A') }}</small>
+                        </div>
+                        <div>
+                            {% if record.isOverdue() %}
+                                <span class="badge bg-danger fs-7">OVERDUE</span>
+                            {% elseif record.isApproachingDeadline(48) %}
+                                <span class="badge bg-warning text-dark fs-7">DUE SOON</span>
+                            {% else %}
+                                <span class="badge bg-secondary fs-7">ACTIVE</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <ul class="list-unstyled small text-muted mb-0">
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span>Current Status:</span>
+                            <strong>{{ record.status.label() }}</strong>
+                        </li>
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span>Last Updated:</span>
+                            <span>{{ record.updatedAt|date('M d, Y H:i') }}</span>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span>Updated By:</span>
+                            <span>{{ record.updatedBy ? record.updatedBy.displayName : 'System' }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Submit Resolution Form (When PENDING) -->
+            {% if record.status.value == 'PENDING' %}
+                <div class="card shadow-sm border-primary">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h2 class="h6 mb-0 fw-bold d-flex align-items-center gap-2">
+                            <i class="bi bi-cloud-arrow-up-fill" aria-hidden="true"></i>
+                            Submit Requirement Resolution
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">
+                            Once your work is ready, attach any supporting files and optional remarks for your instructor.
+                        </p>
+
+                        <form method="post" action="{{ path('student_incomplete_submit', {'id': record.id}) }}" enctype="multipart/form-data">
+                            <input type="hidden" name="_token" value="{{ csrf_token('submit_inc_' ~ record.id) }}">
+
+                            <div class="mb-3">
+                                <label for="submission_note" class="form-label fw-semibold small">Student Explanation / Remarks</label>
+                                <textarea name="submission_note" id="submission_note" class="form-control" rows="3" placeholder="Provide context, comments, or links related to your submission..."></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="attachment" class="form-label fw-semibold small">Upload File Attachment (Optional)</label>
+                                <input type="file" name="attachment" id="attachment" class="form-control" aria-describedby="fileHelp">
+                                <div id="fileHelp" class="form-text small">
+                                    Allowed formats: PDF, DOC, DOCX, ZIP, PNG, JPG (Max 10MB).
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary fw-semibold py-2">
+                                    <i class="bi bi-send-fill me-1" aria-hidden="true"></i> Submit for Teacher Review
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

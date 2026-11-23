@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit INC Requirement: {{ record.missingItemTitle }} — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('teacher_dashboard') }}">Instructor Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('teacher_incompletes') }}">INC Records</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('teacher_incomplete_detail', {'id': record.id}) }}">{{ record.missingItemTitle }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h4 fw-bold mb-1">Edit Incomplete Requirement</h1>
+                        <p class="text-muted small mb-0">{{ record.student.fullName }} &bull; {{ record.subject.code }}</p>
+                    </div>
+                    {{ status_badge(record.status) }}
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" action="{{ path('teacher_incomplete_edit', {'id': record.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('edit_inc_' ~ record.id) }}">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="missing_category" class="form-label fw-semibold">Item Category <span class="text-danger">*</span></label>
+                                <select name="missing_category" id="missing_category" class="form-select" required>
+                                    <option value="Activity" {{ record.missingCategory == 'Activity' ? 'selected' : '' }}>Activity</option>
+                                    <option value="Assignment" {{ record.missingCategory == 'Assignment' ? 'selected' : '' }}>Assignment</option>
+                                    <option value="Project" {{ record.missingCategory == 'Project' ? 'selected' : '' }}>Project</option>
+                                    <option value="Examination" {{ record.missingCategory == 'Examination' ? 'selected' : '' }}>Examination</option>
+                                    <option value="Laboratory" {{ record.missingCategory == 'Laboratory' ? 'selected' : '' }}>Laboratory Report</option>
+                                    <option value="Other" {{ record.missingCategory == 'Other' ? 'selected' : '' }}>Other Requirement</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label for="missing_item_title" class="form-label fw-semibold">Requirement Item Title <span class="text-danger">*</span></label>
+                                <input type="text" name="missing_item_title" id="missing_item_title" class="form-control" value="{{ record.missingItemTitle }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="teacher_explanation" class="form-label fw-semibold">Teacher Explanation &amp; Remarks <span class="text-danger">*</span></label>
+                            <textarea name="teacher_explanation" id="teacher_explanation" class="form-control" rows="3" required>{{ record.teacherExplanation }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="required_action" class="form-label fw-semibold">Required Student Action (Instructions) <span class="text-danger">*</span></label>
+                            <textarea name="required_action" id="required_action" class="form-control" rows="3" required>{{ record.requiredAction }}</textarea>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="deadline" class="form-label fw-semibold">Submission Deadline <span class="text-danger">*</span></label>
+                                <input type="datetime-local" name="deadline" id="deadline" class="form-control" value="{{ record.deadline|date('Y-m-d\\TH:i') }}" required>
+                                <div class="form-text small">Updating the deadline triggers an internal student notification and audit record.</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{{ path('teacher_incomplete_detail', {'id': record.id}) }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary fw-semibold px-4">
+                                <i class="bi bi-save2-fill me-1" aria-hidden="true"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

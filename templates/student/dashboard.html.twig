@@ -1,0 +1,179 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Student Dashboard — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <!-- Header banner -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Welcome, {{ student.firstName }}!</h1>
+            <p class="text-muted mb-0">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-2">{{ student.studentNumber }}</span>
+                Section: <strong>{{ student.section ? student.section.name : 'Unassigned' }}</strong> &bull; {{ student.yearLevel }}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('student_incompletes') }}" class="btn btn-warning fw-semibold shadow-sm text-dark d-flex align-items-center gap-1">
+                <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> View Missing Requirements ({{ pendingCount }})
+            </a>
+            <a href="{{ path('student_grades') }}" class="btn btn-outline-primary d-flex align-items-center gap-1">
+                <i class="bi bi-card-checklist" aria-hidden="true"></i> View Full Grades
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between text-muted mb-2">
+                        <span class="small text-uppercase fw-bold">Academic Standing</span>
+                        <i class="bi bi-award-fill text-primary fs-4" aria-hidden="true"></i>
+                    </div>
+                    <div class="h3 fw-bold text-dark mb-1">{{ gpa > 0 ? gpa ~ '%' : 'N/A' }}</div>
+                    <small class="text-muted">Average across evaluated terms</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border-start border-warning border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between text-muted mb-2">
+                        <span class="small text-uppercase fw-bold">Pending INCs</span>
+                        <i class="bi bi-hourglass-split text-warning fs-4" aria-hidden="true"></i>
+                    </div>
+                    <div class="h3 fw-bold text-warning mb-1">{{ pendingCount }}</div>
+                    <small class="text-muted">Awaiting your resolution</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border-start border-info border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between text-muted mb-2">
+                        <span class="small text-uppercase fw-bold">Under Review</span>
+                        <i class="bi bi-arrow-up-circle-fill text-info fs-4" aria-hidden="true"></i>
+                    </div>
+                    <div class="h3 fw-bold text-info mb-1">{{ submittedCount }}</div>
+                    <small class="text-muted">Submitted to instructors</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card h-100 border-start border-success border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between text-muted mb-2">
+                        <span class="small text-uppercase fw-bold">Resolved / Completed</span>
+                        <i class="bi bi-check-circle-fill text-success fs-4" aria-hidden="true"></i>
+                    </div>
+                    <div class="h3 fw-bold text-success mb-1">{{ completedCount }}</div>
+                    <small class="text-muted">Cleared requirements</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Urgent / Nearest Deadlines Section -->
+        <div class="col-12 col-lg-7">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-alarm-fill text-warning fs-5" aria-hidden="true"></i>
+                        <h2 class="h5 mb-0 fw-bold">Nearest Resolution Deadlines</h2>
+                    </div>
+                    <a href="{{ path('student_incompletes') }}" class="small text-decoration-none">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if upcomingDeadlines is empty %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-check2-circle text-success fs-1 mb-2 d-block" aria-hidden="true"></i>
+                            <p class="mb-0 fw-medium">No pending incomplete requirements! You are all caught up.</p>
+                        </div>
+                    {% else %}
+                        <div class="list-group list-group-flush">
+                            {% for inc in upcomingDeadlines %}
+                                <div class="list-group-item p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                    <div class="d-flex flex-column">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-secondary">{{ inc.subject.code }}</span>
+                                            <span class="fw-bold">{{ inc.missingItemTitle }}</span>
+                                            <span class="badge bg-light text-dark border">{{ inc.missingCategory }}</span>
+                                        </div>
+                                        <div class="small text-muted">
+                                            Instructor: <strong>{{ inc.teacher ? inc.teacher.fullName : 'N/A' }}</strong> &bull; Period: {{ inc.gradingPeriod.name }}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if inc.isOverdue() %}
+                                            <span class="badge badge-overdue d-inline-flex align-items-center px-2 py-1">
+                                                <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i> Overdue
+                                            </span>
+                                        {% elseif inc.isApproachingDeadline(48) %}
+                                            <span class="badge badge-approaching d-inline-flex align-items-center px-2 py-1">
+                                                <i class="bi bi-clock-history me-1" aria-hidden="true"></i> Due Soon
+                                            </span>
+                                        {% endif %}
+
+                                        <div class="text-end me-2">
+                                            <div class="small fw-semibold text-danger">{{ inc.deadline|date('M d, Y') }}</div>
+                                            <div class="text-muted fs-8">{{ inc.deadline|date('h:i A') }}</div>
+                                        </div>
+
+                                        <a href="{{ path('student_incomplete_detail', {'id': inc.id}) }}" class="btn btn-sm btn-primary">
+                                            Resolve
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Internal Notifications Section -->
+        <div class="col-12 col-lg-5">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-bell-fill text-primary fs-5" aria-hidden="true"></i>
+                        <h2 class="h5 mb-0 fw-bold">Recent Academic Alerts</h2>
+                    </div>
+                    <a href="{{ path('app_notifications') }}" class="small text-decoration-none">All Alerts</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recentNotifications is empty %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-bell-slash fs-1 text-muted mb-2 d-block" aria-hidden="true"></i>
+                            <p class="mb-0">No notifications at this time.</p>
+                        </div>
+                    {% else %}
+                        <div class="list-group list-group-flush">
+                            {% for notif in recentNotifications %}
+                                <div class="list-group-item p-3 {{ notif.isRead ? '' : 'bg-light border-start border-primary border-3' }}">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <div class="fw-semibold text-dark small">{{ notif.title }}</div>
+                                        <small class="text-muted">{{ notif.createdAt|date('M d, H:i') }}</small>
+                                    </div>
+                                    <p class="small text-muted mb-1">{{ notif.message }}</p>
+                                    {% if notif.link %}
+                                        <a href="{{ notif.link }}" class="small fw-semibold text-primary text-decoration-none">
+                                            View Details &rarr;
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

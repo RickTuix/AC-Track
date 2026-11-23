@@ -1,0 +1,128 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Grade Sheet: {{ subject.code }} ({{ section.name }}) — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('teacher_dashboard') }}">Instructor Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ subject.code }} - {{ section.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary fs-6">{{ subject.code }}</span>
+                <span class="badge bg-dark fs-6">{{ section.name }}</span>
+                <span class="badge bg-light text-dark border">{{ subject.units }} Units</span>
+            </div>
+            <h1 class="h3 fw-bold mb-0">{{ subject.title }}</h1>
+            <p class="text-muted small mb-0">{{ section.academicYear }} &bull; {{ section.semester }} &bull; Class Roster: {{ students|length }} Students</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('teacher_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Back to Dashboard
+            </a>
+            <a href="{{ path('teacher_incomplete_new') }}" class="btn btn-outline-warning text-dark d-flex align-items-center gap-1">
+                <i class="bi bi-plus-circle-fill" aria-hidden="true"></i> Issue INC Requirement
+            </a>
+        </div>
+    </div>
+
+    <form method="post" action="{{ path('teacher_grades_matrix', {'sectionId': section.id, 'subjectId': subject.id}) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('save_grades') }}">
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <div class="fw-bold">
+                    <i class="bi bi-table text-primary me-1" aria-hidden="true"></i>
+                    Student Grades &amp; Performance Sheet
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold">
+                    <i class="bi bi-save2-fill me-1" aria-hidden="true"></i> Save All Grades
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0" aria-label="Student Grades Form">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" style="width: 250px;">Student Name &amp; ID</th>
+                                {% for period in periods %}
+                                    <th scope="col" class="text-center" style="min-width: 170px;">
+                                        <div>{{ period.name }}</div>
+                                        <small class="text-muted fw-normal">Score (0-100) or INC</small>
+                                    </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if students is empty %}
+                                <tr>
+                                    <td colspan="{{ 1 + periods|length }}" class="text-center py-4 text-muted">
+                                        No students enrolled in this section.
+                                    </td>
+                                </tr>
+                            {% else %}
+                                {% for student in students %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-dark">{{ student.lastName }}, {{ student.firstName }}</div>
+                                            <div class="small text-muted font-monospace">{{ student.studentNumber }}</div>
+                                        </td>
+                                        {% for period in periods %}
+                                            {% set g = gradeMatrix[student.id][period.id] ?? null %}
+                                            {% set fieldPrefix = 'grades[' ~ student.id ~ '][' ~ period.id ~ ']' %}
+                                            <td>
+                                                <div class="d-flex flex-column gap-1">
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="number" step="0.01" min="0" max="100"
+                                                               class="form-control text-center font-monospace fw-bold"
+                                                               name="{{ fieldPrefix }}[val]"
+                                                               value="{{ g and not g.isInc ? g.numericalValue : '' }}"
+                                                               placeholder="Score"
+                                                               aria-label="Grade for {{ student.fullName }} in {{ period.name }}">
+                                                    </div>
+                                                    <div class="d-flex align-items-center justify-content-between pt-1">
+                                                        <div class="form-check form-check-inline m-0">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                   name="{{ fieldPrefix }}[is_inc]"
+                                                                   value="1"
+                                                                   id="inc_{{ student.id }}_{{ period.id }}"
+                                                                   {{ g and g.isInc ? 'checked' : '' }}>
+                                                            <label class="form-check-label small text-danger fw-semibold" for="inc_{{ student.id }}_{{ period.id }}">
+                                                                INC
+                                                            </label>
+                                                        </div>
+                                                        <input type="text"
+                                                               class="form-control form-control-sm py-0 px-1 text-muted"
+                                                               style="max-width: 90px; font-size: 0.75rem;"
+                                                               name="{{ fieldPrefix }}[remarks]"
+                                                               value="{{ g ? g.remarks : '' }}"
+                                                               placeholder="Remarks"
+                                                               aria-label="Remarks for {{ student.fullName }} in {{ period.name }}">
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-light p-3 d-flex justify-content-between align-items-center">
+                <span class="small text-muted">
+                    <i class="bi bi-info-circle me-1" aria-hidden="true"></i> Check <strong>INC</strong> to flag an incomplete grade requirement for that grading period.
+                </span>
+                <button type="submit" class="btn btn-primary fw-semibold px-4">
+                    <i class="bi bi-save2-fill me-1" aria-hidden="true"></i> Save All Grades
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

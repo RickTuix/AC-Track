@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Academic Grade Slip - {{ student.studentNumber }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            color: #333;
+            margin: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+        .header h1 {
+            margin: 0 0 4px 0;
+            font-size: 18pt;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+        }
+        .header .sub {
+            font-size: 9pt;
+            color: #555;
+            text-transform: uppercase;
+        }
+        .meta-box {
+            width: 100%;
+            margin-bottom: 18px;
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 8px;
+        }
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .meta-table td {
+            padding: 4px 8px;
+            font-size: 9.5pt;
+        }
+        .meta-label {
+            color: #64748b;
+            font-weight: bold;
+            font-size: 8pt;
+            text-transform: uppercase;
+        }
+        table.grades-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table.grades-table th, table.grades-table td {
+            border: 1px solid #cbd5e1;
+            padding: 6px 8px;
+            font-size: 9pt;
+        }
+        table.grades-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: bold;
+            text-align: center;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .badge-inc {
+            color: #b91c1c;
+            font-weight: bold;
+        }
+        .badge-pass {
+            color: #15803d;
+            font-weight: bold;
+        }
+        .inc-section {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #fca5a5;
+            background-color: #fef2f2;
+        }
+        .inc-title {
+            color: #b91c1c;
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 6px;
+        }
+        .signatures {
+            margin-top: 40px;
+            width: 100%;
+        }
+        .signatures td {
+            text-align: center;
+            font-size: 9pt;
+            padding-top: 30px;
+        }
+        .sig-line {
+            border-top: 1px solid #000;
+            width: 80%;
+            margin: 0 auto;
+            padding-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AC.TRACK ACADEMIC SYSTEM</h1>
+        <div class="sub">Office of the University Registrar &bull; Official Student Grade Report</div>
+        <div style="font-size: 8.5pt; color: #64748b; margin-top: 2px;">Academic Term 2024-2025 &bull; First Semester</div>
+    </div>
+
+    <div class="meta-box">
+        <table class="meta-table">
+            <tr>
+                <td style="width: 25%;">
+                    <div class="meta-label">Student Name</div>
+                    <div><strong>{{ student.fullName }}</strong></div>
+                </td>
+                <td style="width: 25%;">
+                    <div class="meta-label">Student ID</div>
+                    <div><strong>{{ student.studentNumber }}</strong></div>
+                </td>
+                <td style="width: 25%;">
+                    <div class="meta-label">Section</div>
+                    <div>{{ student.section ? student.section.name : 'N/A' }}</div>
+                </td>
+                <td style="width: 25%;">
+                    <div class="meta-label">Year Level</div>
+                    <div>{{ student.yearLevel }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="grades-table">
+        <thead>
+            <tr>
+                <th style="text-align: left; width: 15%;">Subject Code</th>
+                <th style="text-align: left; width: 35%;">Subject Description</th>
+                <th style="width: 8%;">Units</th>
+                {% for period in periods %}
+                    <th style="width: 10%;">{{ period.name }}</th>
+                {% endfor %}
+                <th style="width: 12%;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for subjectId, subject in subjects %}
+                <tr>
+                    <td><strong>{{ subject.code }}</strong></td>
+                    <td>{{ subject.title }}</td>
+                    <td class="text-center">{{ subject.units }}</td>
+                    {% set hasInc = false %}
+                    {% for period in periods %}
+                        {% set grade = matrix[subjectId][period.id] ?? null %}
+                        <td class="text-center">
+                            {% if grade %}
+                                {% if grade.isInc %}
+                                    {% set hasInc = true %}
+                                    <span class="badge-inc">INC</span>
+                                {% else %}
+                                    <span>{{ grade.numericalValue|number_format(2) }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span>-</span>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                    <td class="text-center">
+                        {% if hasInc %}
+                            <span class="badge-inc">INCOMPLETE</span>
+                        {% else %}
+                            <span class="badge-pass">PASSED</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% set hasIncs = false %}
+    {% for subjectId, pList in incMap %}
+        {% if pList is not empty %}{% set hasIncs = true %}{% endif %}
+    {% endfor %}
+
+    {% if hasIncs %}
+        <div class="inc-section">
+            <div class="inc-title">Official Incomplete Requirements Log</div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+                <thead>
+                    <tr style="background: #fee2e2;">
+                        <th style="border: 1px solid #f87171; padding: 4px;">Subject</th>
+                        <th style="border: 1px solid #f87171; padding: 4px;">Period</th>
+                        <th style="border: 1px solid #f87171; padding: 4px;">Requirement Item</th>
+                        <th style="border: 1px solid #f87171; padding: 4px;">Status</th>
+                        <th style="border: 1px solid #f87171; padding: 4px;">Deadline</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subjectId, pList in incMap %}
+                        {% for periodId, inc in pList %}
+                            <tr>
+                                <td style="border: 1px solid #f87171; padding: 4px;">{{ inc.subject.code }}</td>
+                                <td style="border: 1px solid #f87171; padding: 4px;">{{ inc.gradingPeriod.name }}</td>
+                                <td style="border: 1px solid #f87171; padding: 4px;">{{ inc.missingItemTitle }} ({{ inc.missingCategory }})</td>
+                                <td style="border: 1px solid #f87171; padding: 4px;"><strong>{{ inc.status.value }}</strong></td>
+                                <td style="border: 1px solid #f87171; padding: 4px;">{{ inc.deadline|date('Y-m-d') }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <table class="signatures">
+        <tr>
+            <td style="width: 33%;">
+                <div class="sig-line"><strong>{{ student.fullName }}</strong><br>Student</div>
+            </td>
+            <td style="width: 33%;">
+                <div class="sig-line"><strong>University Registrar</strong><br>Records Verification</div>
+            </td>
+            <td style="width: 33%;">
+                <div class="sig-line"><strong>{{ generatedAt|date('F d, Y') }}</strong><br>Date of Issuance</div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,0 +1,88 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Manage Subjects — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Curriculum &amp; Subjects</h1>
+            <p class="text-muted mb-0">Course catalog, credit units, and descriptions.</p>
+        </div>
+        <div>
+            <button class="btn btn-primary d-flex align-items-center gap-1" data-bs-toggle="collapse" data-bs-target="#newSubjectForm" aria-expanded="false" aria-controls="newSubjectForm">
+                <i class="bi bi-plus-circle-fill" aria-hidden="true"></i> Add New Subject
+            </button>
+        </div>
+    </div>
+
+    <!-- Collapse form for creating a new subject -->
+    <div class="collapse mb-4" id="newSubjectForm">
+        <div class="card shadow-sm border-primary">
+            <div class="card-header bg-primary text-white py-3">
+                <h2 class="h6 mb-0 fw-bold">Add Course to Catalog</h2>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{{ path('admin_subjects') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('new_subject') }}">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label for="code" class="form-label fw-semibold">Subject Code <span class="text-danger">*</span></label>
+                            <input type="text" name="code" id="code" class="form-control" placeholder="e.g. CS101" required>
+                        </div>
+                        <div class="col-md-7">
+                            <label for="title" class="form-label fw-semibold">Subject Title <span class="text-danger">*</span></label>
+                            <input type="text" name="title" id="title" class="form-control" placeholder="e.g. Introduction to Computing" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="units" class="form-label fw-semibold">Units <span class="text-danger">*</span></label>
+                            <input type="number" name="units" id="units" class="form-control" value="3" min="1" max="6" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-semibold">Description</label>
+                        <textarea name="description" id="description" class="form-control" rows="2" placeholder="Course outline / description..."></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#newSubjectForm">Cancel</button>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4">Create Subject</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" aria-label="Subjects Catalog Table">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 140px;">Code</th>
+                            <th scope="col">Subject Title</th>
+                            <th scope="col" class="text-center" style="width: 80px;">Units</th>
+                            <th scope="col">Description</th>
+                            <th scope="col" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in subjects %}
+                            <tr>
+                                <td class="font-monospace fw-bold text-primary">{{ sub.code }}</td>
+                                <td class="fw-semibold">{{ sub.title }}</td>
+                                <td class="text-center fw-medium">{{ sub.units }}</td>
+                                <td class="small text-muted">{{ sub.description ?: 'No description provided.' }}</td>
+                                <td class="text-end">
+                                    <a href="{{ path('admin_subject_edit', {'id': sub.id}) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil" aria-hidden="true"></i> Edit
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

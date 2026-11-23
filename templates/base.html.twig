@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AC.TRACK — Academics Tracker{% endblock %}</title>
+    
+    <!-- Bootstrap 5.3.3 CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        :root {
+            --primary-navy: #0f172a;
+            --brand-blue: #1d4ed8;
+            --brand-blue-hover: #1e40af;
+            --sidebar-width: 260px;
+        }
+
+        /* Accessibility: Skip Link */
+        .skip-link {
+            position: absolute;
+            top: -50px;
+            left: 10px;
+            background: #1d4ed8;
+            color: #ffffff;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-weight: 600;
+            z-index: 9999;
+            border-radius: 4px;
+            transition: top 0.2s ease;
+        }
+        .skip-link:focus {
+            top: 10px;
+            outline: 3px solid #facc15;
+        }
+
+        /* Keyboard Focus Visible for WCAG 2.2 AA */
+        *:focus-visible {
+            outline: 3px solid #2563eb !important;
+            outline-offset: 2px !important;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar-brand-custom {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff !important;
+        }
+
+        .navbar-brand-badge {
+            font-size: 0.65rem;
+            background: #3b82f6;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .layout-wrapper {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #0f172a;
+            color: #f1f5f9;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e293b;
+        }
+
+        .sidebar .nav-link {
+            color: #cbd5e1;
+            padding: 10px 16px;
+            margin: 2px 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link:focus {
+            background-color: #1e293b;
+            color: #ffffff;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .sidebar-heading {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+            font-weight: 700;
+            padding: 16px 20px 6px;
+        }
+
+        .main-content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-color: #f8fafc;
+        }
+
+        .top-navbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 10px 24px;
+        }
+
+        .card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+        }
+
+        .badge-overdue {
+            background-color: #ef4444;
+            color: #ffffff;
+        }
+        .badge-approaching {
+            background-color: #f59e0b;
+            color: #000000;
+        }
+
+        @media (max-width: 991.98px) {
+            .layout-wrapper {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #1e293b;
+            }
+        }
+    </style>
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+    <!-- WCAG 2.2 AA Skip Navigation Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    {% if app.user %}
+    <div class="layout-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar py-3" aria-label="Main Navigation">
+            <div class="px-3 pb-3 mb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center justify-content-between">
+                <a href="{{ path('app_home') }}" class="d-flex align-items-center gap-2 text-decoration-none navbar-brand-custom">
+                    <span class="fs-4"><i class="bi bi-mortarboard-fill text-primary" aria-hidden="true"></i></span>
+                    <div>
+                        <span class="fs-5 tracking-tight">AC.TRACK</span>
+                        <div class="navbar-brand-badge text-center">Academics</div>
+                    </div>
+                </a>
+            </div>
+
+            <nav class="nav flex-column flex-grow-1" aria-label="Role Navigation">
+                {# STUDENT NAVIGATION #}
+                {% if app.user.isStudent() %}
+                    <div class="sidebar-heading">Student Portal</div>
+                    <a href="{{ path('student_dashboard') }}" class="nav-link {{ app.request.attributes.get('_route') == 'student_dashboard' ? 'active' : '' }}">
+                        <i class="bi bi-speedometer2" aria-hidden="true"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ path('student_grades') }}" class="nav-link {{ app.request.attributes.get('_route') in ['student_grades', 'student_grade_report'] ? 'active' : '' }}">
+                        <i class="bi bi-card-checklist" aria-hidden="true"></i>
+                        <span>My Grades</span>
+                    </a>
+                    <a href="{{ path('student_incompletes') }}" class="nav-link {{ app.request.attributes.get('_route') in ['student_incompletes', 'student_incomplete_detail'] ? 'active' : '' }}">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                        <span>INC Requirements</span>
+                    </a>
+                    <a href="{{ path('student_grade_report') }}" class="nav-link {{ app.request.attributes.get('_route') == 'student_grade_report' ? 'active' : '' }}">
+                        <i class="bi bi-printer" aria-hidden="true"></i>
+                        <span>Grade Report (Print/PDF)</span>
+                    </a>
+                {% endif %}
+
+                {# TEACHER NAVIGATION (Instructors only see their respective dashboard and INC resolutions) #}
+                {% if app.user.isTeacher() %}
+                    <div class="sidebar-heading">Instructor Portal</div>
+                    <a href="{{ path('teacher_dashboard') }}" class="nav-link {{ app.request.attributes.get('_route') == 'teacher_dashboard' ? 'active' : '' }}">
+                        <i class="bi bi-grid-1x2" aria-hidden="true"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ path('teacher_incompletes') }}" class="nav-link {{ app.request.attributes.get('_route') in ['teacher_incompletes', 'teacher_incomplete_detail', 'teacher_incomplete_new', 'teacher_incomplete_edit'] ? 'active' : '' }}">
+                        <i class="bi bi-clipboard-pulse" aria-hidden="true"></i>
+                        <span>INC Resolutions</span>
+                    </a>
+                {% endif %}
+
+                {# ADMIN NAVIGATION #}
+                {% if app.user.isAdmin() %}
+                    <div class="sidebar-heading">Registrar / Admin</div>
+                    <a href="{{ path('admin_dashboard') }}" class="nav-link {{ app.request.attributes.get('_route') == 'admin_dashboard' ? 'active' : '' }}">
+                        <i class="bi bi-kanban" aria-hidden="true"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ path('admin_users') }}" class="nav-link {{ app.request.attributes.get('_route') starts with 'admin_users' ? 'active' : '' }}">
+                        <i class="bi bi-people" aria-hidden="true"></i>
+                        <span>Users & Profiles</span>
+                    </a>
+                    <a href="{{ path('admin_sections') }}" class="nav-link {{ app.request.attributes.get('_route') starts with 'admin_sections' ? 'active' : '' }}">
+                        <i class="bi bi-collection" aria-hidden="true"></i>
+                        <span>Sections & Rosters</span>
+                    </a>
+                    <a href="{{ path('admin_subjects') }}" class="nav-link {{ app.request.attributes.get('_route') starts with 'admin_subjects' ? 'active' : '' }}">
+                        <i class="bi bi-book" aria-hidden="true"></i>
+                        <span>Subjects</span>
+                    </a>
+                    <a href="{{ path('admin_grading_periods') }}" class="nav-link {{ app.request.attributes.get('_route') starts with 'admin_grading_periods' ? 'active' : '' }}">
+                        <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                        <span>Grading Periods</span>
+                    </a>
+                    <a href="{{ path('admin_reports_progress') }}" class="nav-link {{ app.request.attributes.get('_route') starts with 'admin_reports' ? 'active' : '' }}">
+                        <i class="bi bi-file-earmark-bar-graph" aria-hidden="true"></i>
+                        <span>Academic Reports</span>
+                    </a>
+                    <a href="{{ path('admin_audit_logs') }}" class="nav-link {{ app.request.attributes.get('_route') == 'admin_audit_logs' ? 'active' : '' }}">
+                        <i class="bi bi-shield-check" aria-hidden="true"></i>
+                        <span>Audit Logs</span>
+                    </a>
+                {% endif %}
+
+                <div class="sidebar-heading mt-3">Account</div>
+                <a href="{{ path('app_notifications') }}" class="nav-link {{ app.request.attributes.get('_route') == 'app_notifications' ? 'active' : '' }}">
+                    <i class="bi bi-bell" aria-hidden="true"></i>
+                    <span>Notifications</span>
+                    {% set unread = unread_notifications_count(app.user) %}
+                    {% if unread > 0 %}
+                        <span class="badge bg-danger rounded-pill ms-auto" aria-label="{{ unread }} unread notifications">{{ unread }}</span>
+                    {% endif %}
+                </a>
+            </nav>
+
+            <div class="p-3 border-top border-secondary border-opacity-25">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                        <i class="bi bi-person-circle fs-4 text-light"></i>
+                        <div class="overflow-hidden">
+                            <div class="text-truncate fw-semibold text-white fs-7">{{ app.user.displayName }}</div>
+                            <small class="text-muted text-uppercase fs-8">{{ app.user.roles[0]|replace({'ROLE_': ''}) }}</small>
+                        </div>
+                    </div>
+                    <a href="{{ path('app_logout') }}" class="btn btn-sm btn-outline-danger" title="Sign out" aria-label="Sign out">
+                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace Area -->
+        <div class="main-content-area">
+            <!-- Top Navbar -->
+            <header class="top-navbar d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-dark-subtle text-dark border px-2 py-1">
+                        <i class="bi bi-shield-lock me-1" aria-hidden="true"></i>
+                        {{ app.user.roles[0]|replace({'ROLE_': ''}) }}
+                    </span>
+                    <span class="text-secondary">|</span>
+                    <span class="small text-muted">Academic Term 2024-2025 (1st Semester)</span>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ path('app_notifications') }}" class="btn btn-outline-secondary btn-sm position-relative" aria-label="View notifications">
+                        <i class="bi bi-bell" aria-hidden="true"></i>
+                        {% set unreadHeader = unread_notifications_count(app.user) %}
+                        {% if unreadHeader > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ unreadHeader }}
+                                <span class="visually-hidden">unread notifications</span>
+                            </span>
+                        {% endif %}
+                    </a>
+
+                    <span class="fw-medium small d-none d-sm-inline">{{ app.user.displayName }}</span>
+                    
+                    <a href="{{ path('app_logout') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i> Logout
+                    </a>
+                </div>
+            </header>
+
+            <!-- Main Content Container -->
+            <main id="main-content" class="p-4 flex-grow-1" tabindex="-1">
+                <!-- Flash Messages -->
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
+                            {% if label == 'success' %}
+                                <i class="bi bi-check-circle-fill text-success fs-5" aria-hidden="true"></i>
+                            {% elseif label in ['danger', 'error'] %}
+                                <i class="bi bi-exclamation-octagon-fill text-danger fs-5" aria-hidden="true"></i>
+                            {% elseif label == 'warning' %}
+                                <i class="bi bi-exclamation-triangle-fill text-warning fs-5" aria-hidden="true"></i>
+                            {% else %}
+                                <i class="bi bi-info-circle-fill text-info fs-5" aria-hidden="true"></i>
+                            {% endif %}
+                            <div class="flex-grow-1">{{ message }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+
+                {% block body %}{% endblock %}
+            </main>
+
+            <!-- Accessible Footer -->
+            <footer class="py-3 px-4 bg-white border-top text-muted small d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>AC.TRACK</strong> — Academic Tracker & Incomplete-Grade Resolution System
+                </div>
+                <div>
+                    <span>WCAG 2.2 AA Compliant &bull; Internal System</span>
+                </div>
+            </footer>
+        </div>
+    </div>
+    {% else %}
+        <!-- Unauthenticated Public Layout -->
+        <main id="main-content" class="flex-grow-1 d-flex flex-column justify-content-center" tabindex="-1">
+            <!-- Flash Messages -->
+            <div class="container mt-3">
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+
+            {% block public_body %}{% block public %}{% endblock %}{% endblock %}
+        </main>
+    {% endif %}
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

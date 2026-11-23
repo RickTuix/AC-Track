@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Manage Sections — AC.TRACK{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Sections &amp; Class Cohorts</h1>
+            <p class="text-muted mb-0">Manage classes, terms, and student cohort rosters.</p>
+        </div>
+        <div>
+            <button class="btn btn-primary d-flex align-items-center gap-1" data-bs-toggle="collapse" data-bs-target="#newSectionForm" aria-expanded="false" aria-controls="newSectionForm">
+                <i class="bi bi-plus-circle-fill" aria-hidden="true"></i> Add New Section
+            </button>
+        </div>
+    </div>
+
+    <!-- Collapse form for creating a new section -->
+    <div class="collapse mb-4" id="newSectionForm">
+        <div class="card shadow-sm border-primary">
+            <div class="card-header bg-primary text-white py-3">
+                <h2 class="h6 mb-0 fw-bold">Create New Section</h2>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{{ path('admin_sections') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('new_section') }}">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="name" class="form-label fw-semibold">Section Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="name" class="form-control" placeholder="e.g. BSIT-3B" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="academic_year" class="form-label fw-semibold">Academic Year <span class="text-danger">*</span></label>
+                            <input type="text" name="academic_year" id="academic_year" class="form-control" value="2024-2025" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="semester" class="form-label fw-semibold">Semester <span class="text-danger">*</span></label>
+                            <input type="text" name="semester" id="semester" class="form-control" value="1st Semester" required>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#newSectionForm">Cancel</button>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4">Create Section</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for sec in sections %}
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h2 class="h5 mb-0 fw-bold text-primary">{{ sec.name }}</h2>
+                        <span class="badge bg-secondary">{{ sec.academicYear }}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-muted small mb-3">Semester: <strong>{{ sec.semester }}</strong></div>
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded border mb-3">
+                            <div class="text-center">
+                                <div class="h4 fw-bold text-dark mb-0">{{ sec.students|length }}</div>
+                                <small class="text-muted">Enrolled Students</small>
+                            </div>
+                            <div class="vr"></div>
+                            <div class="text-center">
+                                <div class="h4 fw-bold text-dark mb-0">{{ sec.sectionSubjects|length }}</div>
+                                <small class="text-muted">Assigned Courses</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center">
+                        <a href="{{ path('admin_section_roster', {'id': sec.id}) }}" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
+                            <i class="bi bi-people-fill" aria-hidden="true"></i> Class Roster &rarr;
+                        </a>
+                        <a href="{{ path('admin_assignments') }}" class="btn btn-sm btn-outline-secondary">
+                            Subject Faculty &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
